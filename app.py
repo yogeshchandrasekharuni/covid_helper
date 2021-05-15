@@ -9,7 +9,7 @@ import dateparser
 import pandas as pd
 from pdb import set_trace
 
-class Bot:
+class App:
     def __init__(
         self
     ) -> None:
@@ -98,8 +98,5 @@ class Bot:
         return vals
 
 if __name__ == '__main__':
-    bot = Bot()
-    #bot.send_frq(frequency = 0.01666668)
-    #print(bot.db_handler.get_n_latest_readings(4))
-    bot.main()
-    #pprint(bot.get_todays_readings())
+    app = App()
+    app.main()
