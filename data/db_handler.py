@@ -4,32 +4,7 @@ from pdb import set_trace
 from pprint import pprint
 import django.db.backends.sqlite3.base
 from typing import List, Tuple
-try:
-    from logs.base_logger import logger
-except ModuleNotFoundError:
-    class not_logging:
-        def __init__(self):
-            self.INFO, self.WARN, self.ERROR = None, None, None
-            print('Logging has been turned off.')
-            return None
-        
-        def __call__(self, *args, **kwargs):
-            return None
-        
-        def info(self, *args, **kwargs):
-            return None
-        
-        def warn(self, *args, **kwargs):
-            return None
-        
-        def error(self, *args, **kwargs):
-            return None
-        
-        def basicConfig(self, *args, **kwargs):
-            return None
-
-    logger = not_logging()
-    
+from logs.base_logger import logger
 
 class DBHandler:
     '''
@@ -179,7 +154,3 @@ if __name__ == '__main__':
     handler.set_readings(temp = 96, o2 = 94, curr_time = datetime.now())
 
     pprint(handler.get_n_latest_readings(4))
-    
-    #pprint(handler.is_time_in_table(datetime.now()))
-    
-    #pprint(handler.get_time())
