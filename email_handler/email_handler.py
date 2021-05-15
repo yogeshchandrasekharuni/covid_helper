@@ -12,6 +12,8 @@ from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from logs.base_logger import logger
+import pickle
+import os
 
 
 class EmailHandler:
@@ -19,22 +21,102 @@ class EmailHandler:
     Email handler to send and recieve emails
     '''
     
-    def __init__(self):
+    def __init__(
+        self
+        ) -> None:
         logger.info('Class EmailHandler has been initialized.')
         self.set_credentials()
 
     
     def set_credentials(
         self,
-        sender_email: str = 'brahmidarling69@gmail.com',
-        reciever_email: str = 'testemail2923@gmail.com',
-        sender_password: str = r'#Brahmi69'
+        sender_email: str = None, #'brahmidarling69@gmail.com',
+        reciever_email: str = None, #'testemail2923@gmail.com',
+        sender_password: str = None, #r'#Brahmi69',
+        save_changes = False
     ):
-        self.sender_email = sender_email
-        self.reciever_email = reciever_email
-        self.sender_password = sender_password
-        logger.info('Credentials for EmailHandler have been set, sender_email: {}, reciever_email: {}'.format(self.sender_email, self.reciever_email))
-        return
+
+        _creds_path = 'utils/credentials.pickle'
+        if not os.path.isfile(_creds_path):
+            logger.info('Credentials file not found, dummy hash table initialized.')
+            creds = {'sender_email': '', 'sender_password': '', 'reciever_email': ''}
+            with open(_creds_path, 'wb') as save_file:
+                pickle.dump(creds, save_file)
+
+        if save_changes:
+            
+            if sender_email and reciever_email and sender_password:
+                logger.info('Sender email, reciever email and sender password have been updated.')
+                with open('utils/credentials.pickle', 'rb') as save_file:
+                    creds = pickle.load(save_file)
+                
+                self.sender_email = sender_email
+                self.sender_password = sender_password
+                self.reciever_email = reciever_email
+                creds['sender_email'] = self.sender_email
+                creds['reciever_email'] = self.reciever_email
+                creds['sender_password'] = self.sender_password
+
+                with open('utils/credentials.pickle', 'wb') as save_file:
+                    pickle.dump(creds, save_file)
+
+            else:
+                if sender_email:
+                    logger.info('Sender email has been updated.')
+                    self.sender_email = sender_email
+                    with open('utils/credentials.pickle', 'rb') as save_file:
+                        creds = pickle.load(save_file)
+                    creds['sender_email'] = self.sender_email
+                    with open('utils/credentials.pickle', 'wb') as save_file:
+                        pickle.dump(creds, save_file)
+                
+                if reciever_email:
+                    logger.info('Reciever email has been updated.')
+                    self.reciever_email = reciever_email
+                    with open('utils/credentials.pickle', 'rb') as save_file:
+                        creds = pickle.load(save_file)
+                    creds['reciever_email'] = self.reciever_email
+                    with open('utils/credentials.pickle', 'wb') as save_file:
+                        pickle.dump(creds, save_file)
+
+                if sender_password:
+                    logger.info('Sender password has been updated')
+                    self.sender_password = sender_password
+                    with open('utils/credentials.pickle', 'rb') as save_file:
+                        creds = pickle.load(save_file)
+                    creds['sender_password'] = self.sender_password
+                    with open('utils/credentials.pickle', 'wb') as save_file:
+                        pickle.dump(creds, save_file)
+
+                
+        else:
+            with open('utils/credentials.pickle', 'rb') as save_file:
+                creds = pickle.load(save_file)
+
+            self.sender_email = creds['sender_email']
+            self.reciever_email = creds['reciever_email']
+            self.sender_password = creds['sender_password']
+            logger.info('Credentials for EmailHandler have been set, sender_email: {}, reciever_email: {}'.format(self.sender_email, self.reciever_email))
+
+    
+    def check_email(
+        self
+    ) -> bool:
+        '''
+        Checks if sender email and password are valid
+        '''
+
+        port = 465  # For SSL
+
+        # Create a secure SSL context
+        context = ssl.create_default_context()
+        try:
+            with smtplib.SMTP_SSL("smtp.gmail.com", port, context=context) as server:
+                server.login(self.sender_email, self.sender_password)
+            return True
+        except smtplib.SMTPAuthenticationError as e:
+            return False
+            
     
     
     def send_email(
