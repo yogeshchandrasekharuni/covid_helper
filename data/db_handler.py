@@ -15,8 +15,12 @@ class DBHandler:
         self,
         conn: sqlite3.Connection = None
     ) -> None:
+        '''
+        Initlaizes DBHandler
+        '''
         
-        logger.info('Class DBHandler has been initialized.')
+        logger.info('DBHandler has been initialized.')
+        print('INFO: DBHandler has been initialized.')
         self.conn = conn if conn else sqlite3.connect('readings.db', detect_types=sqlite3.PARSE_DECLTYPES)
         self.cursor = self.conn.cursor()
 
@@ -42,6 +46,7 @@ class DBHandler:
             self.cursor.execute(query)
 
         logger.info('Table has been checked or created.')
+        print('INFO: Table has been checked or created.')
         return
             
     
@@ -81,6 +86,7 @@ class DBHandler:
             self.cursor.execute(query)
 
         logger.info('Readings with id: {} has been inserted into the table.'.format(curr_id))
+        print('INFO: Readings with id: {} has been inserted into the table.'.format(curr_id))
         return
             
     def get_n_latest_readings(
@@ -103,7 +109,13 @@ class DBHandler:
         return self.convert_to_local(self.cursor.fetchall())
     
     
-    def get_time(self):
+    def get_time(
+        self
+        ) -> list:
+        '''
+        Returns all timestamps from the table
+        '''
+
         query = '''
         SELECT time as "[timestamp]" FROM readings
         '''
@@ -111,10 +123,24 @@ class DBHandler:
         return self.cursor.fetchall()
     
     
-    def utc_to_local(self, x):
+    def utc_to_local(
+        self,
+        x: list
+        ) -> tuple:
+        '''
+        Converts UTC to local time
+        '''
+
         return (x[0], x[1], x[2].replace(tzinfo=timezone.utc).astimezone(tz=None))
     
-    def convert_to_local(self, outputs):
+    def convert_to_local(
+        self,
+        outputs: list
+        ) -> list:
+        '''
+        Maps to a function that converts UTC time to local
+        '''
+
         return list(
             map(
                 self.utc_to_local,
@@ -127,6 +153,9 @@ class DBHandler:
         self,
         time: datetime
     ) -> bool:
+        '''
+        Checks if passed time exists in table
+        '''
         
         query = f'''
         SELECT EXISTS (SELECT 1 FROM readings WHERE readings.time = '{time}')
@@ -137,6 +166,9 @@ class DBHandler:
     def get_all_values(
         self
     ) -> List[Tuple]:
+        '''
+        Retrieves all rows from table
+        '''
         
         query = f'''
         SELECT * FROM readings
