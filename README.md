@@ -1,11 +1,12 @@
 # Covid Helper
 
-## UI
+- An app that helps you in your fight against Covid-19.
+
 <img src="https://github.com/yogeshchandrasekharuni/covid_helper/blob/main/utils/gui_screenshot.png" width="800">
 
-## Documentation
+# Documentation
 
-### Directory structure
+## Directory structure
 ```
 📦covidhelper
  ┣ 📂data
@@ -26,7 +27,7 @@
  ┗ 📜launcher.py
  ```
 
-### Classes
+## Classes
 
 ```db_handler.DBHandler```
 - Handles storing, retrieving and querying to and from the database.
@@ -47,14 +48,14 @@
 - User Interface that uses Tkinter. Supports settings window for saving user-credentials, plots their readings in the form of a graph and also shows the readings of the day in a table.
 
 
-### Usage
+## Usage
 
 1. Create a new virtual environment.
 ```
 conda create -n your_env_name
 ```
 
-2. Create a new burner account in Gmail. This email-ID will be used to send out reminder emails, retrieving readings, etc. You will need to enter its ID and password the first time you open the application.
+2. Create a new burner account in Gmail. This email-ID will be used to send out reminder emails, retrieving readings, etc. You will need to enter its ID and password the first time you use the application.
 
 2. Clone this repository.
 ```
@@ -78,6 +79,6 @@ python launcher.py
 7. Click on ```Refresh stats``` to see the updated graphs and tables.
 
 
-### Using the executable
+## Using the executable
 
-- This project has been compiled into a standalone executable file. Incase you are not interested in going through few of the above steps, you can download the zip folder from this link.
+This project has been compiled into a standalone executable file. Incase you are not interested in going through few of the above steps, you can download the zip folder from [this link](https://drive.google.com/file/d/114LCy-eBQbrK413Tg_ejqLTbsNHqW0Ic/view?usp=sharing). Double click on ```covidhelper.exe``` to start the app.
