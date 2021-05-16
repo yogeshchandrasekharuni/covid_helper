@@ -19,11 +19,18 @@ import smtplib
 
 
 class AppGUI:
+    '''
+    Graphical Interface for CovidHelper
+    '''
 
     def __init__(
         self
         ) -> None:
-
+        '''
+        Initializes the GUI's dependencies
+        '''
+        
+        print('INFO: GUI initialized.')
         self.app = App()
         self.status = False # stores running status
         self.main_thread = KThread(target=self.app.main) # thread to run app on
@@ -32,15 +39,19 @@ class AppGUI:
         self.is_shown = {'o2': False, 'temp': False, 'table': False} # keeps track of shown tables / plots
         self.label_bg_color = '#e6e6fa' # all labels will have this background color
         self.button_bg_color = '#D8BFD8' # all buttons will have this background color
+        self.max_show = 12
 
     def _exit_handler(self):
         '''
-        Called when window is closed
-        If user does not manually STOP the app thread before closing the window, this function will kill it
+        Called when window is closed.
+        If user does not manually STOP the app thread before closing the window, this function will kill it.
         '''
         if self.main_thread is not None and self.main_thread.is_alive():
             self.main_thread.kill()
-    
+            logger.info('Main thread has been killed.')
+            print('INFO: Main thread killed.')
+
+        print('INFO: GUI closed.')
         self.window.destroy() # destroy the window
 
     def main(
@@ -55,8 +66,15 @@ class AppGUI:
             Called when START/STOP button is called
             Spawns or kills the app thread    
             '''
+            print('INFO: Start/Stop button clicked.')
 
-            def show_warning(message) -> None:
+            def show_warning(
+                message: str
+                ) -> None:
+                '''
+                Displays a pop-up window with a warning message
+                '''
+                print('WARN: {}'.format(message))
                 warning_window = Toplevel(self.window)
                 warning_window.title('Warning')
                 warning_window.geometry('300x100')
@@ -67,6 +85,7 @@ class AppGUI:
 
 
             if not self.app.email_handler.sender_email or not self.app.email_handler.sender_password or not self.app.email_handler.reciever_email:
+                # if atleast one of the necessary creds are missing, display a warning message
                 show_warning(message = 'Missing Credentials:\nPlease go to the settings section to update your details.')
                 return
 
@@ -83,16 +102,18 @@ class AppGUI:
                 if not self.main_thread:
                     self.main_thread = KThread(target=self.app.main)
 
-                logger.info('app thread has been started.')
                 self.main_thread.start()
+                logger.info('App thread has been started.')
+                print('INFO: Main thread started.')
 
             else:
 
                 # if program is already running, kill the thread
                 running_status_label.configure(text="Program has been shut down!")
                 self.status = False
-                logger.info('app thread has been killed.')
                 self.main_thread.kill()
+                logger.info('app thread has been killed.')
+                print('INFO: Main thread killed.')
                 self.main_thread = None
 
         
@@ -101,6 +122,9 @@ class AppGUI:
             Called when REFRESH button is clicked
             Updates all tables and graphs if already displayed
             '''
+
+            print('INFO: Refresh stats button clicked.')
+            logger.info('Refresh stats button clicked.')
             updates_label.configure(
                 text = '''Number of reminder emails sent: {}\nNumber of readings recieved: {}\nNumber of daily tables sent out: {}'''.format(
                         self.app.n_reading_reminder_emails,
@@ -118,19 +142,21 @@ class AppGUI:
 
 
 
-        def plot_graph():
+        def plot_graph() -> None:
             '''
             Plots either temperature or oxygen-saturation on the GUI
             '''
+
+            print('INFO: {} has been graphed.'.format('Temperature' if self.to_plot == 'temp' else 'O2-Saturation'))
             # getting the data
-            data = pd.DataFrame(self.app.db_handler.get_all_values(), columns = ['id', 'temp', 'o2', 'time'])
+            data = pd.DataFrame(self.app.get_todays_readings(), columns = ['id', 'temp', 'o2', 'time'])
 
             fixed_times = []
             for index in range(data.shape[0]):
                 # make time readable
                 fixed_times.append(data.iloc[index].time.strftime("%I:%M %p"))
 
-            data = data.sort_values('time', ascending=True) # sort data based on time
+            data = data.sort_values('time', ascending=True).head(self.max_show) # sort data based on time
             data.time = fixed_times
             
             # plotting
@@ -178,13 +204,15 @@ class AppGUI:
             Displays readings
             '''
 
+            print('INFO: Readings table displayed.')
             self.is_shown['table'] = True
             cols = ['ID', 'Temperature', 'O2-Saturation', 'Time']
-            data = pd.DataFrame(self.app.db_handler.get_all_values(), columns = cols)
+            #data = pd.DataFrame(self.app.db_handler.get_all_values(), columns = cols)
+            data = pd.DataFrame(self.app.get_todays_readings(), columns = cols)
         
             data = data.sort_values('Time', ascending=False, ignore_index=True)
 
-            for y in range(len(data)+1):
+            for y in range(min(len(data)+1, self.max_show)):
                 for x in range(len(cols)):
                     if y==0:
                         e=Entry(font=('Consolas 8 bold'),bg='light blue',justify='center')
@@ -199,24 +227,33 @@ class AppGUI:
                         else:
                             e.insert(0,data[cols[x]][y-1])
 
-        def open_settings():
+        def open_settings() -> None:
+            '''
+            Opens a pop-up window to set credentials
+            '''
+
+            print('INFO: Settings window opened.')
+            logger.info('Settings window opened.')
+
             settings_window = Toplevel(self.window)
             settings_window.title('Settings')
             settings_window.geometry('600x400')
 
+            # user email
             label_user_email = Label(settings_window, text = 'Enter your email:')
             label_user_email['font'] = font.Font(size=13, weight='normal')
             label_user_email.place(relx = 0.2, rely = 0.1)
             user_email = Text(settings_window, height = 2, width = 20)
             user_email.place(relx = 0.5, rely = 0.1)
 
-
+            # burner email
             label_burner_email = Label(settings_window, text = 'Enter your burner email:')
             label_burner_email['font'] = font.Font(size=13, weight='normal')
             label_burner_email.place(relx = 0.2, rely = 0.3)
             burner_email = Text(settings_window, height = 2, width = 20)
             burner_email.place(relx = 0.5, rely = 0.3)
 
+            # burner email password
             label_burner_pass = Label(settings_window, text = 'Enter your burner\nemail\'s password:')
             label_burner_pass['font'] = font.Font(size=13, weight='normal')
             label_burner_pass.place(relx = 0.2, rely = 0.5)
@@ -225,6 +262,10 @@ class AppGUI:
 
 
             def get_inputs() -> None:
+                '''
+                Retrieves inputs from the input fields in settings window
+                '''
+
                 inputs = []
                 input_fields = [user_email, burner_email, burner_pass]
                 for field in input_fields:
