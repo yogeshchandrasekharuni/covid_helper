@@ -6,6 +6,7 @@ import imaplib
 import email
 import traceback 
 from pdb import set_trace
+from typing import Tuple
 import dateparser
 import re
 from email.mime.text import MIMEText
@@ -24,7 +25,11 @@ class EmailHandler:
     def __init__(
         self
         ) -> None:
+        '''
+        Initalizes EmailHandler
+        '''
         logger.info('Class EmailHandler has been initialized.')
+        print('INFO: EmailHandler has been initlaized.')
         self.set_credentials()
 
     
@@ -34,19 +39,24 @@ class EmailHandler:
         reciever_email: str = None, #'testemail2923@gmail.com',
         sender_password: str = None, #r'#Brahmi69',
         save_changes = False
-    ):
+    ) -> None:
+        '''
+        Sets credentials for the emails and password. If save_changes is True, accepts inputs and saves it, else just reads from saved file
+        '''
 
         _creds_path = 'utils/credentials.pickle'
         if not os.path.isfile(_creds_path):
+            # first time starting the app, no creds file found
+            # create dummy file
             logger.info('Credentials file not found, dummy hash table initialized.')
             creds = {'sender_email': '', 'sender_password': '', 'reciever_email': ''}
             with open(_creds_path, 'wb') as save_file:
                 pickle.dump(creds, save_file)
 
         if save_changes:
+            # accept input and save the changes
             
             if sender_email and reciever_email and sender_password:
-                logger.info('Sender email, reciever email and sender password have been updated.')
                 with open('utils/credentials.pickle', 'rb') as save_file:
                     creds = pickle.load(save_file)
                 
@@ -60,36 +70,44 @@ class EmailHandler:
                 with open('utils/credentials.pickle', 'wb') as save_file:
                     pickle.dump(creds, save_file)
 
+                logger.info('Sender email, reciever email and sender password have been updated.')
+                print('INFO: Sender email, reciever email and sender password have been updated.')
+
             else:
                 if sender_email:
-                    logger.info('Sender email has been updated.')
                     self.sender_email = sender_email
                     with open('utils/credentials.pickle', 'rb') as save_file:
                         creds = pickle.load(save_file)
                     creds['sender_email'] = self.sender_email
                     with open('utils/credentials.pickle', 'wb') as save_file:
                         pickle.dump(creds, save_file)
+                    logger.info('Sender email has been updated.')
+                    print('INFO: Sender email has been updated.')
                 
                 if reciever_email:
-                    logger.info('Reciever email has been updated.')
                     self.reciever_email = reciever_email
                     with open('utils/credentials.pickle', 'rb') as save_file:
                         creds = pickle.load(save_file)
                     creds['reciever_email'] = self.reciever_email
                     with open('utils/credentials.pickle', 'wb') as save_file:
                         pickle.dump(creds, save_file)
+                    logger.info('Reciever email has been updated.')
+                    print('INFO: Reciever email has been updated.')
 
                 if sender_password:
-                    logger.info('Sender password has been updated')
                     self.sender_password = sender_password
                     with open('utils/credentials.pickle', 'rb') as save_file:
                         creds = pickle.load(save_file)
                     creds['sender_password'] = self.sender_password
                     with open('utils/credentials.pickle', 'wb') as save_file:
                         pickle.dump(creds, save_file)
+                    logger.info('Sender password has been updated.')
+                    print('INFO: Sender password has been updated.')
 
                 
         else:
+            # load input
+
             with open('utils/credentials.pickle', 'rb') as save_file:
                 creds = pickle.load(save_file)
 
@@ -97,6 +115,7 @@ class EmailHandler:
             self.reciever_email = creds['reciever_email']
             self.sender_password = creds['sender_password']
             logger.info('Credentials for EmailHandler have been set, sender_email: {}, reciever_email: {}'.format(self.sender_email, self.reciever_email))
+            print('INFO: Credentials for EmailHandler have been set, sender_email: {}, reciever_email: {}'.format(self.sender_email, self.reciever_email))
 
     
     def check_email(
@@ -113,8 +132,13 @@ class EmailHandler:
         try:
             with smtplib.SMTP_SSL("smtp.gmail.com", port, context=context) as server:
                 server.login(self.sender_email, self.sender_password)
+
+            logger.info('Sender email and password verified.')
+            print('INFO: Sender email and password verified.')
             return True
         except smtplib.SMTPAuthenticationError as e:
+            logger.warn('Invalid credentials for sender email and passsword.')
+            print('WARN: Invalid credentials for sender email and passsword.')
             return False
             
     
@@ -123,8 +147,13 @@ class EmailHandler:
         self,
         message: str = '',
         send_as_attachment = False
-    ):
-        print('Sending email now...')
+    ) -> None:
+        '''
+        Sends an email with the passed message.
+        If send_as_attachment is true, assume message is in HTML and parses it.
+        '''
+        logger.info('Sending email with message "{}"'.format(message))
+        print('INFO: Sending email with message "{}"'.format(message))
         port = 465  # For SSL
 
         # Create a secure SSL context
@@ -142,13 +171,15 @@ class EmailHandler:
                 message = msg.as_string()
     
             server.sendmail(self.sender_email, self.reciever_email, message)
-            logger.info('Email with message: {} has been sent.'.format(message))
+            logger.info('Email sent.')
+            print('INFO: Email sent.')
                 
                 
     def read_email(
         self
-    ):
+    ) -> Tuple:
         '''
+        Reads the email from inbox.
         Source: https://codehandbook.org/how-to-read-email-from-gmail-using-python/
         https://stackoverflow.com/questions/17874360/python-how-to-parse-the-body-from-a-raw-email-given-that-raw-email-does-not
         '''
@@ -174,7 +205,8 @@ class EmailHandler:
                         email_subject = msg['subject']
                         email_from = msg['from']
                         if re.search(r'[\w\.-]+@[\w\.-]+', email_from).group() != self.reciever_email:
-                            logger.info('Found email that has not been sent by the user, ignoring...')
+                            logger.info('Found email that has not been sent by the user, ignoring.')
+                            print('INFO: Found email that has not been sent by the user, ignoring.')
                             continue
 
 
@@ -187,17 +219,19 @@ class EmailHandler:
                             return msg.get_payload(), email_datetime  
 
         except Exception as e:
-            logger.info('Exception while reading email: {}'.format(str(e)))
-            pass
+            logger.error('Exception while reading email: {}'.format(str(e)))
+            print('ERROR: Exception while reading email - {}'.format(str(e)))
 
 
     def preprocess_email_content(
         self,
-        email
-    ):
+        email: Tuple
+    ) -> Tuple:
+        print('INFO: Preprocessing email...', end = '')
         for index, char in enumerate(email[0]):
             if char == '\n':
                 temp, o2 = email[0][:index-1].split(',')
+                print('DONE')
                 return temp, o2, email[1]
 
 if __name__ == '__main__':
