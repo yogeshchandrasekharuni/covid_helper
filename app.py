@@ -35,7 +35,7 @@ class App:
         self,
         frequency: int = 60 * 60 * 2, # seconds * minutes * n_hours
         last_sent: datetime = None, # last sent email
-        time_to_send_readings: Tuple[str] = ('1:33 PM', '2 PM') # time to send out readings
+        time_to_send_readings: Tuple[str] = ('9 PM', '9:30 PM') # time to send out readings
     ) -> None:
         '''
         Main function, contains an infinite while loop.
